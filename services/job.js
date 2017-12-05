@@ -1,7 +1,7 @@
 const uuidv4 = require('uuid/v4');
 const { Map } = require('immutable');
 const Job = require('../models/job');
-const JobNotFound = require('../models/job-not-found');
+const { JobNotFound } = require('../models/errors');
 
 class JobService {
   constructor() {
@@ -26,6 +26,10 @@ class JobService {
     } else {
       throw new JobNotFound(id);
     }
+  }
+
+  increment(id, amount) {
+    const job = this.jobs.get(id);
   }
 
   index() {

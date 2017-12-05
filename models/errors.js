@@ -5,4 +5,6 @@ class JobNotFound extends Error {
   }
 }
 
-module.exports = JobNotFound;
+module.exports = {
+  JobNotFound
+};

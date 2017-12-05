@@ -1,5 +1,5 @@
 const JobService = require('../../services/job');
-const JobNotFound = require('../../models/job-not-found');
+const { JobNotFound } = require('../../models/errors');
 
 describe('job service', () => {
   let jobService;
@@ -27,17 +27,48 @@ describe('job service', () => {
 
   describe('update', () => {
     it('should update the progress of a given job', () => {
+      const newId = jobService.register(100);
 
+      const newProgress = jobService.update(newId, 50);
+
+      expect(newProgress).toBe(50);
     });
 
     it('should return an error if the job isn\'t found', () => {
+      const newId = 'fake-id';
+
+      const update = () => { jobService.update(newId, 50); };
+
+      expect(update).toThrowError(Error);
+    });
+
+    it('should throw an error if the new value is not valid', () => {
 
     });
   });
 
   describe('increment', () => {
     it('should increment the job\'s progress by a given amount', () => {
+      const newId = jobService.register(100);
 
+      const newProgress = jobService.increment(newId, 5);
+
+      expect(newProgress).toBe(5);
+    });
+
+    it('should throw an error if the job is not found', () => {
+      const newId = 'this-is-a-uuid';
+      const increment = () => { jobService.increment(newId, 4); };
+
+      expect(increment).toThrowError(JobNotFound, `Job with id [${newId}] not found in active jobs.`);
+    });
+
+    it('should throw an error if the amount is not valid', () => {
+      const newId = jobService.register(100);
+
+      const increment = () => { jobService.increment(newId, 'five'); };
+
+      expect(increment).toThrowError(Error);
     });
   });
 
@@ -60,7 +91,7 @@ describe('job service', () => {
       expect(jobService.show(newId)).not.toBeNull();
     });
 
-    it('should return an error if a job with a particular id is not found', () => {
+    it('should throw an error if a job with a particular id is not found', () => {
       const newId = 'not-a-uuid';
       const getJob = () => { jobService.show(newId); };
 
