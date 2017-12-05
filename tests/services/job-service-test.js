@@ -23,6 +23,14 @@ describe('job service', () => {
 
       expect(newId.length).toBe(36);
     });
+
+    it('should throw an exception if total is not valid', () => {
+      const undefinedId = () => jobService.register();
+      const nullId = () => jobService.register(null);
+
+      expect(undefinedId).toThrowError(Error);
+      expect(nullId).toThrowError(Error);
+    });
   });
 
   describe('update', () => {
@@ -81,7 +89,7 @@ describe('job service', () => {
       const activeJobs = 4;
 
       for (let i = 0; i < activeJobs; i++) {
-        jobService.register(i);
+        jobService.register(10);
       }
 
       expect(jobService.jobs.count()).toBe(activeJobs);

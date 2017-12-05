@@ -19,7 +19,7 @@ class StaleJobRemoverService {
   }
 
   start() {
-    setInterval(this.checkAndRemoveStaleJobs.bind(this), this.checkInterval);
+    setInterval(this.findAndRemoveStaleJobs.bind(this), this.checkInterval);
   }
 }
 

@@ -15,6 +15,10 @@ class JobService {
   }
 
   register(total) {
+    if (!total) {
+      throw new Error('Total required to register new job.');
+    }
+
     const id = uuidv4();
     const createdAt = Date.now();
     const job = Map({
@@ -42,7 +46,7 @@ class JobService {
         j.set('progress', amount).set('updatedAt', Date.now());
       });
 
-      this.jobs.set(id, updated);
+      this.jobs = this.jobs.set(id, updated);
 
       return amount;
     } else {
@@ -64,7 +68,7 @@ class JobService {
         j.set('progress', newProgress).set('updatedAt', Date.now());
       });
 
-      this.jobs.set(id, updated);
+      this.jobs = this.jobs.set(id, updated);
 
       return newProgress;
     } else {
@@ -73,12 +77,12 @@ class JobService {
   }
 
   index() {
-    return this.jobs.toJS();
+    return Object.values(this.jobs.toJS());
   }
 
   show(id) {
     if (this.jobs.has(id)) {
-      return this.jobs.get(id);
+      return this.jobs.get(id).toJS();
     } else {
       throw new JobNotFound(id);
     }
