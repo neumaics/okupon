@@ -16,7 +16,14 @@ class JobService {
 
   register(total) {
     const id = uuidv4();
-    const job = Map({ id, total, progress: 0 });
+    const createdAt = Date.now();
+    const job = Map({
+      id,
+      total,
+      progress: 0,
+      createdAt,
+      updatedAt: createdAt
+    });
 
     this.jobs = this.jobs.set(id, job);
 
@@ -31,7 +38,11 @@ class JobService {
     if (this.jobs.has(id)) {
       const job = this.jobs.get(id);
 
-      this.jobs.set(id, job.set('progress', amount));
+      const updated = job.withMutations((j) => {
+        j.set('progress', amount).set('updatedAt', Date.now());
+      });
+
+      this.jobs.set(id, updated);
 
       return amount;
     } else {
@@ -49,7 +60,11 @@ class JobService {
       const currentProgress = job.get('progress');
       const newProgress = currentProgress + amount;
 
-      this.jobs.set(id, job.set('progress', newProgress));
+      const updated = job.withMutations((j) => {
+        j.set('progress', newProgress).set('updatedAt', Date.now());
+      });
+
+      this.jobs.set(id, updated);
 
       return newProgress;
     } else {
