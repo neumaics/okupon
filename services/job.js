@@ -1,53 +1,82 @@
 const uuidv4 = require('uuid/v4');
 const { Map } = require('immutable');
-const Job = require('../models/job');
-const { JobNotFound } = require('../models/errors');
+const { JobNotFound, InvalidProgress } = require('../models/errors');
 
 class JobService {
   constructor() {
     this.jobs = Map();
   }
 
+  isValidProgress(progress) {
+    return !!progress &&
+      typeof progress === 'number' &&
+      !isNaN(progress) &&
+      progress >= 0;
+  }
+
   register(total) {
     const id = uuidv4();
-    const job = new Job(id, total, 0);
+    const job = Map({ id, total, progress: 0 });
 
-    // this.jobs[id] = job;
     this.jobs = this.jobs.set(id, job);
 
     return id;
   }
 
-  update(id) {
-    const job = this.jobs.get(id);
+  update(id, amount) {
+    if (!this.isValidProgress(amount)) {
+      throw new InvalidProgress(amount);
+    }
 
-    if (job) {
-      console.log('boop');
+    if (this.jobs.has(id)) {
+      const job = this.jobs.get(id);
+
+      this.jobs.set(id, job.set('progress', amount));
+
+      return amount;
     } else {
       throw new JobNotFound(id);
     }
   }
 
   increment(id, amount) {
-    const job = this.jobs.get(id);
+    if (!this.isValidProgress(amount)) {
+      throw new InvalidProgress(amount);
+    }
+
+    if (this.jobs.has(id)) {
+      const job = this.jobs.get(id);
+      const currentProgress = job.get('progress');
+      const newProgress = currentProgress + amount;
+
+      this.jobs.set(id, job.set('progress', newProgress));
+
+      return newProgress;
+    } else {
+      throw new JobNotFound(id);
+    }
   }
 
   index() {
-    return this.jobs.toJSON();
+    return this.jobs.toJS();
   }
 
   show(id) {
-    const job = this.jobs.get(id);
-
-    if (job) {
-      return job;
+    if (this.jobs.has(id)) {
+      return this.jobs.get(id);
     } else {
       throw new JobNotFound(id);
     }
   }
 
   remove(id) {
-    this.jobs = this.jobs.delete(id);
+    if (this.jobs.has(id)) {
+      this.jobs = this.jobs.delete(id);
+
+      return id;
+    } else {
+      throw new JobNotFound(id);
+    }
   }
 }
 

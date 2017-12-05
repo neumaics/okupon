@@ -5,6 +5,14 @@ class JobNotFound extends Error {
   }
 }
 
+class InvalidProgress extends Error {
+  constructor(amount) {
+    super(`Invalid value given for amount [${amount}]`);
+    this.name = 'JobNotFound';
+  }
+}
+
 module.exports = {
-  JobNotFound
+  JobNotFound,
+  InvalidProgress
 };

@@ -1,5 +1,5 @@
 const JobService = require('../../services/job');
-const { JobNotFound } = require('../../models/errors');
+const { JobNotFound, InvalidProgress } = require('../../models/errors');
 
 describe('job service', () => {
   let jobService;
@@ -13,7 +13,7 @@ describe('job service', () => {
       expect(jobService).not.toBeNull();
       expect(jobService.jobs).not.toBeUndefined();
 
-      expect(Object.values(jobService.index()).length).toBe(0);
+      expect(jobService.jobs.count()).toBe(0);
     });
   });
 
@@ -34,16 +34,20 @@ describe('job service', () => {
       expect(newProgress).toBe(50);
     });
 
-    it('should return an error if the job isn\'t found', () => {
+    it('should throw an error if the job isn\'t found', () => {
       const newId = 'fake-id';
 
       const update = () => { jobService.update(newId, 50); };
 
-      expect(update).toThrowError(Error);
+      expect(update).toThrowError(JobNotFound);
     });
 
     it('should throw an error if the new value is not valid', () => {
+      const newId = jobService.register(100);
 
+      const update = () => { jobService.increment(newId, -10231); };
+
+      expect(update).toThrowError(InvalidProgress);
     });
   });
 
@@ -68,7 +72,7 @@ describe('job service', () => {
 
       const increment = () => { jobService.increment(newId, 'five'); };
 
-      expect(increment).toThrowError(Error);
+      expect(increment).toThrowError(InvalidProgress);
     });
   });
 
@@ -80,7 +84,7 @@ describe('job service', () => {
         jobService.register(i);
       }
 
-      expect(Object.keys(jobService.index()).length).toBe(activeJobs);
+      expect(jobService.jobs.count()).toBe(activeJobs);
     });
   });
 
@@ -95,13 +99,54 @@ describe('job service', () => {
       const newId = 'not-a-uuid';
       const getJob = () => { jobService.show(newId); };
 
-      expect(getJob).toThrowError(JobNotFound, `Job with id [${newId}] not found in active jobs.`);
+      expect(getJob).toThrowError(JobNotFound);
     });
   });
 
-  describe('delete', () => {
+  describe('remove', () => {
     it('should delete a job with a given id', () => {
-      expect(true).toBe(false);
+      const newId = jobService.register(100);
+
+      expect(jobService.jobs.count()).toBe(1);
+      jobService.remove(newId);
+      expect(jobService.jobs.count()).toBe(0);
+    });
+
+    it('should return the id of the removed id', () => {
+      const newId = jobService.register(100);
+      const removedId = jobService.remove(newId);
+
+      expect(removedId).toBe(newId);
+    });
+
+    it('should throw an error if a job with the given id is not found', () => {
+      const newId = 'cant-delete-this';
+      const deleteJob = () => { jobService.remove(newId); };
+
+      expect(deleteJob).toThrowError(JobNotFound);
+    });
+  });
+
+  describe('isValidProgress', () => {
+    it('should return false if progress is null or undefined', () => {
+      expect(jobService.isValidProgress()).toBe(false);
+      expect(jobService.isValidProgress(undefined)).toBe(false);
+      expect(jobService.isValidProgress(null)).toBe(false);
+    });
+
+    it('should return false if progress is not a number', () => {
+      expect(jobService.isValidProgress('fifty five')).toBe(false);
+      expect(jobService.isValidProgress(NaN)).toBe(false);
+    });
+
+    it('should return false if progress is a negative number', () => {
+      expect(jobService.isValidProgress(-40)).toBe(false);
+      expect(jobService.isValidProgress(-2.7)).toBe(false);
+    });
+
+    it('should return true if progress is a positive number', () => {
+      expect(jobService.isValidProgress(4)).toBe(true);
+      expect(jobService.isValidProgress(21.4)).toBe(true);
     });
   });
 });
